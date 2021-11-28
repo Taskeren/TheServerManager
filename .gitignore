@@ -1,0 +1,9 @@
+# Project exclude paths
+/target/
+
+# Idea
+.idea
+
+# Running Trash
+logs
+latest.log
