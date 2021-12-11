@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger
 import java.io.BufferedWriter
 import java.nio.charset.Charset
 import java.util.*
+import kotlin.concurrent.thread
 
 /**
  * 正在运行的 Minecraft 服务器类
@@ -34,22 +35,17 @@ class RunningMcServer internal constructor(
 
 	val running: Boolean get() = process.isAlive
 
+	val pid: Long get() = process.pid()
+
+	var logReaderThread: Thread? = null
+
+	/**
+	 * 日志监听器
+	 */
+	val logReaders = mutableMapOf<Any, (String) -> Unit>()
+
 	init {
-		// 与静态服务器绑定
-		server.runServer = this
-
-		// 进程退出执行相关方法
-		process.onExit().thenRun(this::onProcessExit)
-
-		// dump debugs
-		logger.debug("Running Minecraft Server @ ${this.hashCode()}")
-		logger.debug(" # Process")
-		logger.debug("   PID   ${process.pid()}")
-		logger.debug("   Alive ${process.isAlive}")
-		logger.debug(" # Minecraft Server")
-		logger.debug("   Jar   ${server.jarFile}")
-		logger.debug(" # Misc")
-		logger.debug("   Console Encoding ${encoding.name()}")
+		onProcessBegin()
 	}
 
 	/**
@@ -69,6 +65,14 @@ class RunningMcServer internal constructor(
 		process.destroy()
 	}
 
+	internal fun onProcessBegin() {
+		// 与静态服务器绑定
+		server.runServer = this
+
+		// 进程退出执行相关方法
+		process.onExit().thenRun(this::onProcessExit)
+	}
+
 	/**
 	 * 当进程退出时被调用
 	 */
@@ -80,6 +84,21 @@ class RunningMcServer internal constructor(
 
 		// 移除实例列表
 		RunningMcServers.servers -= this
+	}
+
+	@Throws(IllegalStateException::class)
+	fun initLogReaderThread() {
+		if(logReaderThread == null) {
+			logger.info("LogReader for Server ${server.prop.name}(PID=$pid) has initiated")
+			logReaderThread = thread(isDaemon = true) {
+				while(server.running) {
+					if(logScanner.hasNextLine()) {
+						val line = logScanner.nextLine()
+						logReaders.forEach { (_, listener) -> listener(line) }
+					}
+				}
+			}
+		}
 	}
 
 }

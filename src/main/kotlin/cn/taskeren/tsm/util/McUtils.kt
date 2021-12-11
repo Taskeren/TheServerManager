@@ -1,5 +1,8 @@
 package cn.taskeren.tsm.util
 
+import cn.taskeren.tsm.data.DataProvider
+import cn.taskeren.tsm.jvm.Jvm
+import cn.taskeren.tsm.mc.ServerProp
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.net.ConnectException
@@ -35,3 +38,12 @@ fun pingMcServer(host: String = "127.0.0.1", port: Int = 25565): List<String> {
 		return listOf(ex.message ?: ex.javaClass.canonicalName)
 	}
 }
+
+fun ServerProp.getValidJvm(dataProvider: DataProvider): Jvm =
+	jvmHash?.let {
+		dataProvider.jvmList.first { jvmHash == it.hashCode() }
+	} ?:
+	jvmVersion?.let {
+		dataProvider.jvmList.first { jvmVersion.toString() == it.version }
+	} ?:
+	dataProvider.jvmList.first()

@@ -4,6 +4,7 @@ import cn.taskeren.tsm.TSMGlobal
 import cn.taskeren.tsm.jvm.Jvm
 import cn.taskeren.tsm.mc.running.*
 import cn.taskeren.tsm.util.getOrCreateDirectory
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
@@ -16,7 +17,7 @@ fun McServer.start(
 	jvm: Jvm,
 	jvmArgs: List<String> = buildJvmArgs {  },
 	mcArgs: List<String> = buildMcArgs {  },
-	serverDirectory: File = this.serverDir,
+	serverDirectory: File = this.prop.fileServerPath,
 	encoding: Charset = TSMGlobal.tsmServerEncoding
 ): RunningMcServer {
 	if(running) {
@@ -26,14 +27,14 @@ fun McServer.start(
 	val commandSplit = mutableListOf<String>()
 
 	// JVM
-	commandSplit += jvm.execFile.absolutePath
+	commandSplit += jvm.prop.jarPath.absolutePath
 
 	// JVM args
 	commandSplit += jvmArgs
 
 	// Minecraft Jar
 	commandSplit += "-jar"
-	commandSplit += this.jarFile.absolutePath
+	commandSplit += this.prop.fileServerJarPath.absolutePath
 
 	// Minecraft args
 	commandSplit += mcArgs
@@ -58,6 +59,7 @@ fun McServer.start(
  * @param start 是否立即启动
  * @param outputMethod 日志消息输出方式
  */
+@TestOnly
 fun RunningMcServer.setupLoggingThread(
 	start: Boolean = true,
 	outputMethod: (String) -> Unit = { println(it) }
@@ -76,8 +78,8 @@ fun RunningMcServer.setupLoggingThread(
  */
 fun RunningMcServer.stop(
 	hardMode: Boolean = false,
-	waitForSec: Long = 10,
-	stopCommand: String = "stop" // 关闭服务器的指令，部分服务器不以 'stop' 为关服指令，例如 BungeeCord 以 'end' 作为关闭指令。
+	waitForSec: Long = server.prop.timeDestroy,
+	stopCommand: String = server.prop.commandStop // 关闭服务器的指令，部分服务器不以 'stop' 为关服指令，例如 BungeeCord 以 'end' 作为关闭指令。
 ) {
 	logger.info("Stopping Server(${hashCode()}) by ${if(hardMode) "Process" else "Command ($stopCommand)"}")
 	if(!hardMode) {

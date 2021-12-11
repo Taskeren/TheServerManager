@@ -1,33 +1,16 @@
 package cn.taskeren.tsm.jvm
 
-import cn.taskeren.tsm.util.mustExists
 import java.io.File
 
-class Jvm internal constructor(
-	/**
-	 * JAVA_HOME 位置
-	 */
-	internal val homeDir: File,
-	/**
-	 * java.exe 位置
-	 */
-	internal val execFile: File = File(homeDir, "/bin/java.exe")
-) {
+data class Jvm(val prop: JvmProp) {
 
-	val release: ReleaseInfo = ReleaseInfo(File(homeDir, "release"))
-
-	constructor(homeDirString: String) : this(File(homeDirString))
-
-	init {
-		homeDir.mustExists()
-		execFile.mustExists()
-	}
+	val release: ReleaseInfo = ReleaseInfo(File(prop.homePath, "release"))
 
 	/**
 	 * 通过 'java -version' 获取到的版本信息
 	 */
 	val versionInCommand: String by lazy {
-		ProcessBuilder().command(execFile.toString(), "--version")
+		ProcessBuilder().command(prop.jarPath.toString(), "--version")
 			.start().inputStream.bufferedReader().lines().toList().joinToString("\n")
 	}
 

@@ -3,7 +3,7 @@
 
 package cn.taskeren.tsm.mc.running
 
-import cn.taskeren.tsm.TSMGlobal
+import cn.taskeren.tsm.TSMGlobal.tsmServerJvmArgs
 
 // -XX:+UseG1GC
 // -XX:+UseFastAccessorMethods
@@ -30,8 +30,6 @@ class JvmArgs(
 
 	fun build(): List<String> {
 		return buildList {
-			this += TSMGlobal.tsmServerDefaultJvmArgs
-
 			if(maxMemo != null) {
 				this += "-Xmx$maxMemo"
 			}
@@ -95,4 +93,4 @@ class JvmArgs(
  * 构建 Jvm 启动参数
  * @param func 构建配置
  */
-fun buildJvmArgs(func: JvmArgs.() -> Unit): List<String> = JvmArgs().apply(func).build()
+fun buildJvmArgs(func: JvmArgs.() -> Unit): List<String> = JvmArgs().apply(tsmServerJvmArgs).apply(func).build()
